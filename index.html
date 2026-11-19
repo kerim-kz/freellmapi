@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Электростатикалық шаң ұстағыш — қалай жұмыс істейді?</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161c28; --panel2:#1e2635; --ink:#eef2f8;
+    --muted:#94a3b8; --line:#2b3648;
+    --blue:#4da3ff; --green:#3ddc84; --red:#ff6b6b; --yellow:#ffd75c;
+    --grey:#9aa7b8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--ink);
+    font-family:"Segoe UI",Arial,sans-serif; padding:16px; line-height:1.5;}
+  h1{font-size:1.3rem; margin-bottom:2px;}
+  .sub{color:var(--muted); font-size:.85rem; margin-bottom:14px;}
+  .stages{display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;}
+  .stage{flex:1; min-width:150px; background:var(--panel); border:1px solid var(--line);
+    border-radius:10px; padding:9px 11px; font-size:.82rem;}
+  .stage .num{display:inline-flex; width:22px; height:22px; border-radius:50%;
+    align-items:center; justify-content:center; font-weight:700; font-size:.8rem;
+    margin-right:6px; color:#0b1220;}
+  .stage.s1 .num{background:var(--grey);}
+  .stage.s2 .num{background:var(--yellow);}
+  .stage.s3 .num{background:var(--blue);}
+  .stage.s4 .num{background:var(--green);}
+  .stage b{color:var(--ink);} .stage span{color:var(--muted);}
+  .layout{display:grid; grid-template-columns:260px 1fr; gap:14px; max-width:1120px;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:15px;}
+  label{display:block; font-size:.8rem; color:var(--muted); margin-top:13px;}
+  label b{color:var(--ink); font-size:.92rem;}
+  input[type=range]{width:100%; accent-color:var(--blue); margin-top:3px;}
+  .row{display:flex; justify-content:space-between; align-items:baseline;}
+  .val{color:var(--blue); font-weight:700; font-variant-numeric:tabular-nums;}
+  .btns{display:flex; gap:8px; margin-top:14px;}
+  button{flex:1; padding:9px; border:none; border-radius:8px; cursor:pointer;
+    font-weight:700; font-size:.85rem; background:var(--panel2); color:var(--ink);
+    border:1px solid var(--line);}
+  button.primary{background:var(--blue); color:#04101f; border-color:var(--blue);}
+  button.active{background:var(--green); color:#04140a; border-color:var(--green);}
+  .result{margin-top:16px; border-top:1px solid var(--line); padding-top:12px;}
+  .result .big{font-size:.82rem; color:var(--muted);}
+  .eta{font-size:2rem; font-weight:800; line-height:1.1; margin-top:2px;}
+  .eta.good{color:var(--green);} .eta.mid{color:var(--yellow);} .eta.bad{color:var(--red);}
+  .countline{font-size:.8rem; color:var(--muted); margin-top:3px;}
+  .countline .g{color:var(--green);} .countline .r{color:var(--red);}
+  .phys{margin-top:14px; font-size:.78rem; color:var(--muted); line-height:1.7;}
+  .phys .k{color:var(--ink);} .phys .v{float:right; font-variant-numeric:tabular-nums; color:var(--blue);}
+  canvas{width:100%; height:auto; background:#080b12; border-radius:12px; display:block;}
+  .caption{margin-top:8px; font-size:.78rem; color:var(--muted);}
+  .caption b{color:var(--ink);}
+  .legend{display:flex; gap:16px; flex-wrap:wrap; margin-top:8px; font-size:.78rem;}
+  .legend i{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
+  @media (max-width:800px){ .layout{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<h1>⚡ Электростатикалық шаң ұстағыш: қалай жұмыс істейді?</h1>
+<div class="sub">Түтін газынан шаңды электр күшімен тазалаудың 4 кезеңі — нақты уақытта</div>
+
+<div class="stages">
+  <div class="stage s1"><span class="num">1</span><b>Кіру.</b> <span>Сұр шаң бөлшегі газ ағынымен кіреді. Әзірге зарядсыз.</span></div>
+  <div class="stage s2"><span class="num">2</span><b>Зарядталу.</b> <span>Ортадағы сым (тәж) газды иондайды. Бөлшек «−» заряд алады.</span></div>
+  <div class="stage s3"><span class="num">3</span><b>Тартылу.</b> <span>Зарядталған бөлшекті электр күші пластинаға тартады.</span></div>
+  <div class="stage s4"><span class="num">4</span><b>Тұну.</b> <span>Бөлшек пластинаға жабысады → ауа тазарды.</span></div>
+</div>
+
+<div class="layout">
+  <div class="panel">
+    <div style="font-weight:700; margin-bottom:4px;">🎛️ Басқару</div>
+    <label>
+      <div class="row"><b>Кернеу U</b><span class="val" id="uVal"></span></div>
+      <input type="range" id="uSlider" min="20" max="80" step="1" value="50">
+      <span style="font-size:.72rem;color:var(--muted)">Сымға берілетін кернеу. Үлкейтсең — тарту күші артады.</span>
+    </label>
+    <label>
+      <div class="row"><b>Шаң өлшемі d</b><span class="val" id="dVal"></span></div>
+      <input type="range" id="dSlider" min="0.3" max="10" step="0.1" value="2.5">
+      <span style="font-size:.72rem;color:var(--muted)">Бөлшек диаметрі. Ұсақ шаңды (PM2.5) ұстау қиынырақ.</span>
+    </label>
+    <label>
+      <div class="row"><b>Ағын жылдамдығы v</b><span class="val" id="vVal"></span></div>
+      <input type="range" id="vSlider" min="0.5" max="3" step="0.1" value="1.0">
+      <span style="font-size:.72rem;color:var(--muted)">Газ жылдамдығы. Тез ағын — ұстауға уақыт аз.</span>
+    </label>
+    <div class="btns">
+      <button class="primary" id="resetBtn">🔄 Қайта санау</button>
+      <button id="slowBtn">🐢 Баяу</button>
+    </div>
+    <div class="result">
+      <div class="big">Ауа қаншалықты тазарды?</div>
+      <div class="eta" id="etaSim">—</div>
+      <div class="countline">
+        <span class="g">● ұсталды: <b id="cCaught">0</b></span> &nbsp;
+        <span class="r">● шығып кетті: <b id="cEsc">0</b></span>
+      </div>
+    </div>
+    <div class="phys">
+      <div><span class="k">Өріс күші E:</span><span class="v" id="pE"></span></div>
+      <div><span class="k">Бөлшек заряды q:</span><span class="v" id="pQ"></span></div>
+      <div><span class="k">Тұну жылдамдығы w:</span><span class="v" id="pW"></span></div>
+      <div style="margin-top:6px;font-size:.72rem;">
+        Формула бойынша күтілетін тазалық (η): <b style="color:var(--ink)" id="pEta"></b>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="padding:12px;">
+    <canvas id="cv" width="820" height="420"></canvas>
+    <div class="caption">
+      <b>Не көріп тұрмыз:</b> сары нүктелі сым — <b style="color:var(--yellow)">тәждік электрод</b>,
+      ол газды иондап тұр. Жоғарғы/төменгі жасыл жолақтар — <b style="color:var(--green)">жинаушы пластиналар (+)</b>.
+      Бөлшек сымнан өткенде <b style="color:var(--blue)">көгеріп</b> (зарядталып), пластинаға тартылады.
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--grey)"></i>Зарядсыз шаң</span>
+      <span><i style="background:var(--blue)"></i>Зарядталған шаң (−)</span>
+      <span><i style="background:var(--green)"></i>Ұсталды ✓</span>
+      <span><i style="background:var(--red)"></i>Шығып кетті ✗</span>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const EPS0=8.854e-12, ETA=1.81e-5, LAMBDA=6.8e-8, EPS_R=5.0;
+const D_PLATE=0.15, LENGTH=3.0;
+function cunningham(d){const Kn=2*LAMBDA/d; return 1+Kn*(1.257+0.4*Math.exp(-1.1/Kn));}
+function satCharge(d,E){return 3*EPS_R/(EPS_R+2)*Math.PI*EPS0*d*d*E;}
+function migVel(d,E){return satCharge(d,E)*E*cunningham(d)/(3*Math.PI*ETA*d);}
+function deutsch(w,v){return 1-Math.exp(-w*LENGTH/(v*D_PLATE));}
+
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+const W=cv.width, H=cv.height, MID=H/2;
+const WIRE_X=W*0.34;
+const sx=W/LENGTH, sy=(H/2-14)/D_PLATE;
+
+let U=50e3, D=2.5e-6, V=1.0;
+let particles=[], flashes=[], ions=[];
+let nCaught=0, nEscaped=0;
+let slow=false, spawnAcc=0;
+
+function reset(){ particles=[]; flashes=[]; nCaught=0; nEscaped=0; }
+
+function spawn(){
+  particles.push({
+    x:0, y:(Math.random()*2-1)*D_PLATE*0.88, vy:0, charged:false,
+    w:migVel(D,U/D_PLATE)*(0.9+0.2*Math.random()),
+    hi: particles.filter(p=>p.hi).length===0
+  });
+}
+
+function step(dt){
+  const E=U/D_PLATE;
+  if(Math.random()<0.6){
+    ions.push({x:WIRE_X, y:MID+(Math.random()*2-1)*4, vx:(Math.random()<0.5?-1:1)*(40+Math.random()*60),
+               vy:(Math.random()*2-1)*60, t:1});
+  }
+  for(let i=ions.length-1;i>=0;i--){const s=ions[i]; s.x+=s.vx*dt; s.y+=s.vy*dt; s.t-=dt*1.6; if(s.t<=0) ions.splice(i,1);}
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x += V*dt;
+    if(!p.charged && p.x*sx >= WIRE_X){ p.charged=true; flashes.push({x:p.x, y:p.y, t:1, kind:"charge"}); }
+    if(p.charged){ p.y += Math.sign(p.y|| (Math.random()<.5?-1:1)) * p.w * dt; }
+    if(Math.abs(p.y)>=D_PLATE){ flashes.push({x:p.x, y:Math.sign(p.y)*D_PLATE, t:1, kind:"ok"}); nCaught++; particles.splice(i,1); continue; }
+    if(p.x>=LENGTH){ flashes.push({x:LENGTH, y:p.y, t:1, kind:"esc"}); nEscaped++; particles.splice(i,1); continue; }
+  }
+  for(let i=flashes.length-1;i>=0;i--){flashes[i].t-=dt*2.4; if(flashes[i].t<=0) flashes.splice(i,1);}
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="#1f7a4d"; ctx.fillRect(0,0,W,11); ctx.fillRect(0,H-11,W,11);
+  ctx.fillStyle="#7de0aa"; ctx.font="12px sans-serif";
+  ctx.fillText("➕ Жинаушы пластина (+)",10,H-16);
+  ctx.fillText("➕ Жинаушы пластина (+)",10,26);
+  ctx.strokeStyle="#ffd75c"; ctx.setLineDash([2,7]); ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(WIRE_X,14); ctx.lineTo(WIRE_X,H-14); ctx.stroke();
+  ctx.setLineDash([]);
+  const glow=ctx.createRadialGradient(WIRE_X,MID,2,WIRE_X,MID,60);
+  glow.addColorStop(0,"rgba(255,215,92,0.28)"); glow.addColorStop(1,"rgba(255,215,92,0)");
+  ctx.fillStyle=glow; ctx.fillRect(WIRE_X-60,14,120,H-28);
+  ctx.fillStyle="#ffd75c"; ctx.font="12px sans-serif"; ctx.textAlign="center";
+  ctx.fillText("⚡ Тәждік сым (−)",WIRE_X,H/2-70);
+  ctx.fillText("осы жерде зарядталады",WIRE_X,H/2+80);
+  ctx.textAlign="left";
+  for(const s of ions){ ctx.fillStyle="rgba(120,190,255,"+(0.5*s.t)+")"; ctx.beginPath(); ctx.arc(s.x, s.y, 1.6, 0, 7); ctx.fill(); }
+  ctx.fillStyle="#5b6b82"; ctx.font="11px sans-serif";
+  ctx.fillText("Кірер жақ →", 6, MID-6);
+  ctx.textAlign="right"; ctx.fillText("→ Шығар жақ", W-6, MID-6); ctx.textAlign="left";
+  const r=Math.max(2.4, Math.min(6, 1.4+D*1e6*0.35));
+  for(const p of particles){
+    const cx=p.x*sx, cy=MID+p.y*sy;
+    if(p.charged && p.hi){
+      const dir=Math.sign(p.y||1);
+      ctx.strokeStyle="rgba(77,163,255,0.9)"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,cy+dir*22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx,cy+dir*22); ctx.lineTo(cx-4,cy+dir*15); ctx.lineTo(cx+4,cy+dir*15); ctx.closePath();
+      ctx.fillStyle="rgba(77,163,255,0.9)"; ctx.fill();
+      ctx.fillStyle="#4da3ff"; ctx.font="10px sans-serif"; ctx.fillText("электр күші", cx+7, cy+dir*14);
+    }
+    ctx.beginPath(); ctx.fillStyle = p.charged ? "#4da3ff" : "#9aa7b8"; ctx.arc(cx, cy, r, 0, 7); ctx.fill();
+    if(p.charged){ ctx.strokeStyle="#eaf3ff"; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(cx-2,cy); ctx.lineTo(cx+2,cy); ctx.stroke(); }
+  }
+  for(const f of flashes){
+    const cx=f.x*sx, cy=MID+f.y*sy; let col;
+    if(f.kind==="ok") col="rgba(61,220,132,"+f.t+")";
+    else if(f.kind==="esc") col="rgba(255,107,107,"+f.t+")";
+    else col="rgba(255,215,92,"+f.t+")";
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(cx, cy, (f.kind==="charge"?5:8)*(1.6-f.t), 0, 7); ctx.fill();
+  }
+}
+
+function refresh(){
+  const E=U/D_PLATE, q=satCharge(D,E), w=migVel(D,E), eta=deutsch(w,V);
+  document.getElementById("uVal").textContent=(U/1e3).toFixed(0)+" кВ";
+  document.getElementById("dVal").textContent=(D*1e6).toFixed(1)+" мкм";
+  document.getElementById("vVal").textContent=V.toFixed(1)+" м/с";
+  document.getElementById("pE").textContent=(E/1e3).toFixed(0)+" кВ/м";
+  document.getElementById("pQ").textContent=q.toExponential(2)+" Кл";
+  document.getElementById("pW").textContent=(w*100).toFixed(1)+" см/с";
+  document.getElementById("pEta").textContent=(eta*100).toFixed(0)+"%";
+  const tot=nCaught+nEscaped; const el=document.getElementById("etaSim");
+  if(tot>0){ const s=nCaught/tot*100; el.textContent=s.toFixed(0)+"%";
+    el.className="eta "+(s>90?"good":(s>60?"mid":"bad")); }
+  else { el.textContent="—"; el.className="eta"; }
+  document.getElementById("cCaught").textContent=nCaught;
+  document.getElementById("cEsc").textContent=nEscaped;
+}
+
+document.getElementById("uSlider").oninput=e=>{U=e.target.value*1e3; reset();};
+document.getElementById("dSlider").oninput=e=>{D=e.target.value*1e-6; reset();};
+document.getElementById("vSlider").oninput=e=>{V=+e.target.value; reset();};
+document.getElementById("resetBtn").onclick=reset;
+document.getElementById("slowBtn").onclick=function(){
+  slow=!slow; this.classList.toggle("active"); this.textContent = slow ? "🐢 Баяу ✓" : "🐢 Баяу";
+};
+
+let last=performance.now();
+function loop(now){
+  let dt=Math.min((now-last)/1000,0.05); last=now;
+  if(slow) dt*=0.28;
+  spawnAcc+=dt; const interval = slow ? 0.14 : 0.05;
+  while(spawnAcc>interval){ if(particles.length<(slow?40:180)) spawn(); spawnAcc-=interval; }
+  step(dt); draw(); refresh();
+  requestAnimationFrame(loop);
+}
+refresh(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
